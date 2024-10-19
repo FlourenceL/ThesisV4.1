@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 function Form() {
   const navigate = useNavigate();
   const handleNavigate = () => {
-    navigate("/home");
+    navigate("/");
   };
   const db = getDatabase();
   const [weight, setWeight] = useState("");

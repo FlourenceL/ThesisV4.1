@@ -12,16 +12,6 @@ function Homepage() {
     navigate("/form"); // Change '/form' to the desired path
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate("/"); // Navigate to the login page after logging out
-      console.log("User logged out");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
-
   return (
     <>
       <div className="container">
@@ -33,9 +23,6 @@ function Homepage() {
 
         <button onClick={handleNavigate} className="getStartedbtn">
           Get started!
-        </button>
-        <button onClick={handleLogout} className="logoutBtn">
-          Logout
         </button>
       </div>
 
