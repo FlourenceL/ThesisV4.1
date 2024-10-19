@@ -95,11 +95,22 @@ function Form() {
   };
 
   const handleSubmit = async () => {
+    const today = new Date();
+
+    // Format the date to MM-DD-YYYY
+    const formattedDate = `${(today.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}-${today
+      .getDate()
+      .toString()
+      .padStart(2, "0")}-${today.getFullYear()}`;
+
     // Update the formData with the current weight and height
     const updatedFormData = {
       ...formData,
       weight: weight,
       height: height,
+      createdAt: formattedDate,
     };
 
     // Reference the "Users" node in your database
