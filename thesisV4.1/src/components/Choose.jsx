@@ -11,7 +11,7 @@ function Choose() {
   };
 
   const form2 = () => {
-    navigate("/form2");
+    navigate("/form2_0");
   };
   return (
     <>

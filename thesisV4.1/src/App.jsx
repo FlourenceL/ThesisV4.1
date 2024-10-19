@@ -6,6 +6,7 @@ import Form from "./components/Form";
 import AllStars from "./components/Allstars";
 import Choose from "./components/Choose";
 import Form2 from "./components/Form2";
+import Form2_0 from "./components/Form2_0";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/form" element={<Form />} />
           <Route path="/choose" element={<Choose />} />
           <Route path="/form2" element={<Form2 />} />
+          <Route path="/form2_0" element={<Form2_0 />} />
         </Route>
       </Routes>
     </BrowserRouter>
