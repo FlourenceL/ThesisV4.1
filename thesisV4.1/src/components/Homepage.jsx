@@ -9,7 +9,7 @@ function Homepage() {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
-    navigate("/form"); // Change '/form' to the desired path
+    navigate("/choose"); // Change '/form' to the desired path
   };
 
   return (

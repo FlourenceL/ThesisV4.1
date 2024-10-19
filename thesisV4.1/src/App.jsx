@@ -4,6 +4,7 @@ import Homepage from "./components/Homepage";
 import Layout from "./components/Layout";
 import Form from "./components/Form";
 import AllStars from "./components/Allstars";
+import Choose from "./components/Choose";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" index element={<Homepage />} />
           <Route path="/allstars" element={<AllStars />} />
           <Route path="/form" element={<Form />} />
+          <Route path="/choose" element={<Choose />} />
         </Route>
       </Routes>
     </BrowserRouter>
