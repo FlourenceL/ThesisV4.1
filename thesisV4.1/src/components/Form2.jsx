@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { getDatabase, ref, onValue } from "firebase/database";
+import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 function Form2({ setSelectedUserId }) {
-  // Change prop to setSelectedUserId
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserIdState] = useState("");
 
@@ -35,14 +35,22 @@ function Form2({ setSelectedUserId }) {
     <>
       <h1>Please choose your name: </h1>
 
-      <select value={selectedUserId} onChange={handleChange}>
-        <option value="">Select a user</option>
-        {users.map((user) => (
-          <option key={user.id} value={user.id}>
-            {user.firstName}
-          </option>
-        ))}
-      </select>
+      <FormControl fullWidth>
+        <InputLabel id="select-user-label">Select a user</InputLabel>
+        <Select
+          labelId="select-user-label"
+          id="select-user"
+          value={selectedUserId}
+          label="Select a user"
+          onChange={handleChange}
+        >
+          {users.map((user) => (
+            <MenuItem key={user.id} value={user.id}>
+              {user.firstName}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </>
   );
 }

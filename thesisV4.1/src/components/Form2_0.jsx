@@ -2,7 +2,7 @@ import Form2 from "./Form2";
 import { useState } from "react";
 import WeighingScale from "./WeighingScale";
 import BodyScan from "./BodyScan";
-
+import { Button } from "@mui/material";
 import Height from "./Height";
 import {
   getDatabase,
@@ -145,16 +145,18 @@ function Form2_0() {
             </div>
             <div className="body">{pageDisplay()}</div>
             <div className="footer">
-              <button
+              <Button
+                variant="contained"
                 disabled={page === 0}
                 onClick={() => {
                   setPage((currPage) => currPage - 1);
                 }}
               >
                 Prev
-              </button>
+              </Button>
               <section>
-                <button
+                <Button
+                  variant="contained"
                   disabled={tryAgainDisable()}
                   onClick={() => {
                     if (page === 0) {
@@ -165,20 +167,25 @@ function Form2_0() {
                   }}
                 >
                   {page === 0 ? "Cancel" : "Try again"}
-                </button>
+                </Button>
                 {showAlert && (
                   <div className="alert">
                     <div className="alert-content">
                       <span className="alert-message">
                         Would you like to try again?
                       </span>
-                      <button onClick={handleYes}>Yes</button>
-                      <button onClick={handleNo}>No</button>
+                      <Button variant="contained" onClick={handleYes}>
+                        Yes
+                      </Button>
+                      <Button variant="contained" onClick={handleNo}>
+                        No
+                      </Button>
                     </div>
                   </div>
                 )}
               </section>
-              <button
+              <Button
+                variant="contained"
                 disabled={isNextDisabled()}
                 onClick={() => {
                   if (page === formTitles.length - 1) {
@@ -189,7 +196,7 @@ function Form2_0() {
                 }}
               >
                 {page === formTitles.length - 1 ? "Submit" : "Next"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Button } from "@mui/material";
 
 function Choose() {
   const navigate = useNavigate();
@@ -16,9 +17,15 @@ function Choose() {
   return (
     <>
       <h1>Have you used this machine before?</h1>
-      <button onClick={form}>No, not yet</button>
-      <button onClick={form2}>Yes, I've used it before</button>
-      <button onClick={home}>Back</button>
+      <Button variant="contained" onClick={form}>
+        No, not yet
+      </Button>
+      <Button variant="contained" onClick={form2}>
+        Yes, I've used it before
+      </Button>
+      <Button variant="contained" onClick={home}>
+        Back
+      </Button>
     </>
   );
 }

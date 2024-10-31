@@ -3,6 +3,7 @@ import WeighingScale from "./WeighingScale";
 import BodyScan from "./BodyScan";
 import PersonalInfo from "./PersonalInfo";
 import Height from "./Height";
+import { Button } from "@mui/material";
 import {
   getDatabase,
   ref,
@@ -18,20 +19,22 @@ function Form() {
   const handleNavigate = () => {
     navigate("/choose");
   };
+
   const db = getDatabase();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+
+  // Firebase references
   const loadCellState = ref(db, "Loadcell/state");
   const loadCellData = ref(db, "Loadcell/data");
   const ultraSonicState = ref(db, "Ultrasonic/state");
   const ultraSonicData = ref(db, "Ultrasonic/data");
+
   const [page, setPage] = useState(0);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     age: 0,
-    weight: 0,
-    height: 0,
   });
 
   const formTitles = ["Personal Info", "Body Weight", "Height", "Body Scan"];
@@ -108,32 +111,39 @@ function Form() {
     // Update the formData with the current weight and height
     const updatedFormData = {
       ...formData,
-      weight: weight,
-      height: height,
       createdAt: formattedDate,
     };
 
     // Reference the "Users" node in your database
     const usersRef = ref(db, "Users");
-    const loadCellDataRef = ref(db, "Loadcell/data");
-    const ultraSonicDataRef = ref(db, "Ultrasonic/data");
 
     try {
       const newUserRef = push(usersRef); // This generates a unique key for each new user
       await set(newUserRef, updatedFormData);
       console.log("User data submitted successfully!");
 
-      // Clean up: Delete the loadCellData and ultraSonicData after saving
-      await set(loadCellDataRef, 0); // Deleting Loadcell data
-      await set(ultraSonicDataRef, 0); // Deleting Ultrasonic data
+      // Save progress in a separate node
+      const progressRef = ref(db, `Users/${newUserRef.key}/Progress`); // Reference to the user's Progress node
+      const newProgressRef = push(progressRef); // Generate a unique key for progress
+      await set(newProgressRef, {
+        weight: weight,
+        height: height,
+        createdAt: formattedDate,
+      });
+      console.log("Progress data submitted successfully!");
 
+      // Clean up: Delete the loadCellData and ultraSonicData after saving
+      await set(loadCellData, 0); // Deleting Loadcell data
+      await set(ultraSonicData, 0); // Deleting Ultrasonic data
+
+      // Reset formData
       setFormData({
         firstName: "",
         lastName: "",
         age: 0,
-        weight: 0,
-        height: 0,
       });
+      setWeight(""); // Reset weight
+      setHeight(""); // Reset height
 
       handleNavigate();
 
@@ -152,40 +162,47 @@ function Form() {
           </div>
           <div className="body">{pageDisplay()}</div>
           <div className="footer">
-            <button
+            <Button
+              variant="contained"
               disabled={page === 0}
               onClick={() => {
                 setPage((currPage) => currPage - 1);
               }}
             >
               Prev
-            </button>
+            </Button>
             <section>
-              <button
+              <Button
+                variant="contained"
                 disabled={tryAgainDisable()}
                 onClick={() => {
                   if (page === 0) {
                     handleNavigate();
-                  } else if (page != 0) {
+                  } else if (page !== 0) {
                     handleShowAlert();
                   }
                 }}
               >
                 {page === 0 ? "Cancel" : "Try again"}
-              </button>
+              </Button>
               {showAlert && (
                 <div className="alert">
                   <div className="alert-content">
                     <span className="alert-message">
                       Would you like to try again?
                     </span>
-                    <button onClick={handleYes}>Yes</button>
-                    <button onClick={handleNo}>No</button>
+                    <Button variant="contained" onClick={handleYes}>
+                      Yes
+                    </Button>
+                    <Button variant="contained" onClick={handleNo}>
+                      No
+                    </Button>
                   </div>
                 </div>
               )}
             </section>
-            <button
+            <Button
+              variant="contained"
               disabled={isNextDisabled()}
               onClick={() => {
                 if (page === formTitles.length - 1) {
@@ -196,7 +213,7 @@ function Form() {
               }}
             >
               {page === formTitles.length - 1 ? "Submit" : "Next"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

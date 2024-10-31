@@ -10,11 +10,14 @@
 // 9. CREATE CUSTOM KEYBOARD -_- !!!!!!!!!!!!!!!! DO THIS LAST
 // 10. FINAL DESIGN OF THE SYSTEM !!!!!!!!!!!!!!!!
 // 11. DEPLOY SITE ONLINE !!!!!!!!!!!!!!!!!
-
+import { TextField } from "@mui/material";
 function PersonalInfo({ formData, setFormData }) {
   return (
     <>
-      <input
+      <TextField
+        id="outlined-basic"
+        label="First Name"
+        variant="outlined"
         type="text"
         placeholder="First name..."
         value={formData.firstName}
@@ -24,7 +27,10 @@ function PersonalInfo({ formData, setFormData }) {
       />{" "}
       <br />
       <br />
-      <input
+      <TextField
+        id="outlined-basic"
+        label="Last Name"
+        variant="outlined"
         type="text"
         placeholder="Last name..."
         value={formData.lastName}
@@ -33,7 +39,9 @@ function PersonalInfo({ formData, setFormData }) {
         }
       />{" "}
       <br /> <br />
-      <input
+      <TextField
+        id="outlined-basic"
+        label="Age"
         type="number"
         placeholder="Age..."
         value={formData.age}

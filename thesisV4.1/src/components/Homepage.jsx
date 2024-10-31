@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import "@dotlottie/player-component";
+import { Button } from "@mui/material";
 // Import your CSS file
 
 function Homepage() {
@@ -20,10 +21,9 @@ function Homepage() {
           Quickly find out your body weight, height, and body fat <br />
           percentage. Easy metrics, healthier you!
         </h2>
-
-        <button onClick={handleNavigate} className="getStartedbtn">
+        <Button variant="contained" onClick={handleNavigate}>
           Get started!
-        </button>
+        </Button>
       </div>
 
       <div
