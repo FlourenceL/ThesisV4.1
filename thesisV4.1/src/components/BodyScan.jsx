@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-
+import { Button, TextField } from "@mui/material";
 const BodyScan = () => {
   const videoRef = useRef(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
@@ -66,6 +66,16 @@ const BodyScan = () => {
   return (
     <div>
       <h1>Camera Feed</h1>
+      <TextField
+        id="outlined-read-only-input"
+        label="Body Fat"
+        defaultValue="0"
+        slotProps={{
+          input: {
+            readOnly: true,
+          },
+        }}
+      />
       {isCameraOn ? (
         <img
           ref={videoRef}
@@ -75,32 +85,21 @@ const BodyScan = () => {
       ) : (
         <p>Camera is off</p>
       )}
-      <button onClick={startCamera} disabled={isCameraOn}>
+      <Button variant="contained" onClick={startCamera} disabled={isCameraOn}>
         Turn On Camera
-      </button>
-      <button onClick={stopCamera} disabled={!isCameraOn}>
+      </Button>
+      <Button variant="contained" onClick={stopCamera} disabled={!isCameraOn}>
         Turn Off Camera
-      </button>
-      <button onClick={captureImage} disabled={!isCameraOn}>
+      </Button>
+      <Button variant="contained" onClick={captureImage} disabled={!isCameraOn}>
         Capture Image
-      </button>
+      </Button>
       {capturedImage && (
         <div>
           <h2>Captured Image</h2>
           <img
             src={capturedImage}
             alt="Captured"
-            style={{ width: "100%", maxWidth: "640px" }}
-          />
-          <button onClick={analyzeImage}>Analyze Image</button>
-        </div>
-      )}
-      {analyzedImage && (
-        <div>
-          <h2>Analyzed Image</h2>
-          <img
-            src={analyzedImage}
-            alt="Analyzed"
             style={{ width: "100%", maxWidth: "640px" }}
           />
         </div>
