@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, TextField } from "@mui/material";
+
 const BodyScan = () => {
   const videoRef = useRef(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
-  const [analyzedImage, setAnalyzedImage] = useState(null);
+  const [countdown, setCountdown] = useState(null); // State for countdown
 
   useEffect(() => {
     // Load the video feed URL if the camera is on
@@ -27,40 +28,33 @@ const BodyScan = () => {
   const stopCamera = () => {
     setIsCameraOn(false);
     setCapturedImage(null); // Clear captured image when camera is turned off
-    setAnalyzedImage(null); // Clear analyzed image when camera is turned off
+    setCountdown(null); // Clear countdown when camera is turned off
   };
 
   const captureImage = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/capture_image"); // Adjust for server address if needed
-      const blob = await response.blob();
-      const imageObjectURL = URL.createObjectURL(blob);
-      setCapturedImage(imageObjectURL);
-    } catch (error) {
-      console.error("Error capturing image:", error);
-    }
-  };
+    setCountdown(5); // Start countdown
 
-  const analyzeImage = async () => {
-    if (!capturedImage) return;
-
-    try {
-      const formData = new FormData();
-      const response = await fetch(capturedImage);
-      const blob = await response.blob();
-      formData.append("image", blob, "captured.jpg");
-
-      const result = await fetch("http://localhost:5000/analyze_image", {
-        method: "POST",
-        body: formData,
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === 1) {
+          clearInterval(countdownInterval); // Clear interval
+          return null; // Reset countdown state
+        }
+        return prev - 1; // Decrease countdown
       });
+    }, 1000); // Update countdown every second
 
-      const analyzedBlob = await result.blob();
-      const analyzedObjectURL = URL.createObjectURL(analyzedBlob);
-      setAnalyzedImage(analyzedObjectURL);
-    } catch (error) {
-      console.error("Error analyzing image:", error);
-    }
+    // Wait for the countdown to finish before capturing the image
+    setTimeout(async () => {
+      try {
+        const response = await fetch("http://localhost:5000/capture_image"); // Adjust for server address if needed
+        const blob = await response.blob();
+        const imageObjectURL = URL.createObjectURL(blob);
+        setCapturedImage(imageObjectURL);
+      } catch (error) {
+        console.error("Error capturing image:", error);
+      }
+    }, 5000); // Capture image after 5 seconds
   };
 
   return (
@@ -70,10 +64,8 @@ const BodyScan = () => {
         id="outlined-read-only-input"
         label="Body Fat"
         defaultValue="0"
-        slotProps={{
-          input: {
-            readOnly: true,
-          },
+        InputProps={{
+          readOnly: true,
         }}
       />
       {isCameraOn ? (
@@ -94,6 +86,8 @@ const BodyScan = () => {
       <Button variant="contained" onClick={captureImage} disabled={!isCameraOn}>
         Capture Image
       </Button>
+      {countdown !== null && <h2>Capturing in {countdown}...</h2>}{" "}
+      {/* Display countdown */}
       {capturedImage && (
         <div>
           <h2>Captured Image</h2>
