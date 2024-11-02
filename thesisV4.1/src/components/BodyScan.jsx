@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, TextField } from "@mui/material";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  set,
+  onDisconnect,
+} from "firebase/database";
 
 const BodyScan = () => {
   const videoRef = useRef(null);
@@ -57,13 +64,35 @@ const BodyScan = () => {
     }, 5000); // Capture image after 5 seconds
   };
 
+  const [fat, setFat] = useState("");
+
+  const db = getDatabase();
+
+  useEffect(() => {
+    const Bodyfatref = ref(db, "Bodyfat/data");
+
+    onDisconnect(Bodyfatref).set("");
+
+    // Listen for real-time updates on the "Ultrasonic/data"
+    const unsubscribe = onValue(Bodyfatref, (snapshot) => {
+      const fatValue = snapshot.val();
+      setFat(fatValue);
+    });
+
+    // Cleanup function to set the state to false when the component is unmounted
+    return () => {
+      unsubscribe();
+    };
+  }, [db, setFat]);
+
   return (
     <div>
       <h1>Camera Feed</h1>
       <TextField
         id="outlined-read-only-input"
         label="Body Fat"
-        defaultValue="0"
+        value={fat}
+        onChange={(e) => setInputValue(e.target.value)}
         InputProps={{
           readOnly: true,
         }}
