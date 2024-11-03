@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 function Form({ bmiCategory }) {
   const navigate = useNavigate();
   const handleNavigate = () => {
-    navigate("/choose");
+    navigate("/");
   };
 
   const calculateBMI = (weight, height) => {
