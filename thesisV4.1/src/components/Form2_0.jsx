@@ -3,6 +3,7 @@ import { useState } from "react";
 import WeighingScale from "./WeighingScale";
 import BodyScan from "./BodyScan";
 import { Button } from "@mui/material";
+import Overall from "./Overall";
 import Height from "./Height";
 import {
   getDatabase,
@@ -20,9 +21,11 @@ function Form2_0() {
   const handleNavigate = () => {
     navigate("/choose");
   };
+
   const home = () => {
     navigate("/");
   };
+
   const db = getDatabase();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
@@ -32,13 +35,31 @@ function Form2_0() {
   const ultraSonicState = ref(db, "Ultrasonic/state");
   const ultraSonicData = ref(db, "Ultrasonic/data");
   const fatData = ref(db, "Bodyfat/data");
+  const calculateBMI = (weight, height) => {
+    if (height > 0) {
+      return parseFloat((weight / (height / 100) ** 2).toFixed(2)); // Convert height to meters and limit to 2 decimal places
+    }
+    return 0;
+  };
+  const determineBMICategory = (bmi) => {
+    if (bmi < 18.5) return "Underweight";
+    if (bmi < 24.9) return "Normal weight";
+    if (bmi < 29.9) return "Overweight";
+    return "Obesity";
+  };
   const [page, setPage] = useState(0);
   const [formData, setFormData] = useState({
     weight: 0,
     height: 0,
   });
 
-  const formTitles = ["Personal Info", "Body Weight", "Height", "Body Scan"];
+  const formTitles = [
+    "Personal Info",
+    "Body Weight",
+    "Height",
+    "Body Scan",
+    "Overall",
+  ];
 
   const pageDisplay = () => {
     if (page === 0) {
@@ -49,6 +70,8 @@ function Form2_0() {
       return <Height height={height} setHeight={setHeight} />;
     } else if (page === 3) {
       return <BodyScan fat={fat} setFat={setFat} />;
+    } else if (page === 4) {
+      return <Overall weight={weight} height={height} fat={fat} />;
     }
   };
 
@@ -116,12 +139,17 @@ function Form2_0() {
       .toString()
       .padStart(2, "0")}-${today.getFullYear()}`;
 
+    const bmi = calculateBMI(weight, height);
+    const bmiCategory = determineBMICategory(bmi);
+
     // Update the formData with the current weight and height
     const updatedFormData = {
       weight: weight,
       height: height,
       fat: fat,
       createdAt: formattedDate,
+      bmiCategory: bmiCategory,
+      bmi: bmi,
     };
 
     // Reference the "Users" node in your database using selectedUserId
@@ -143,7 +171,7 @@ function Form2_0() {
       });
       setFat("");
 
-      handleNavigate();
+      home();
     } catch (error) {
       console.error("Error submitting user progress:", error);
     }

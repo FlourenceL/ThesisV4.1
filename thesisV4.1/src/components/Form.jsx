@@ -18,12 +18,15 @@ import { useNavigate } from "react-router-dom";
 function Form({ bmiCategory }) {
   const navigate = useNavigate();
   const handleNavigate = () => {
-    navigate("/");
+    navigate("/choose");
   };
 
+  const home = () => {
+    navigate("/");
+  };
   const calculateBMI = (weight, height) => {
     if (height > 0) {
-      return weight / (height / 100) ** 2; // Convert height to meters
+      return parseFloat((weight / (height / 100) ** 2).toFixed(2)); // Convert height to meters and limit to 2 decimal places
     }
     return 0;
   };
@@ -37,6 +40,7 @@ function Form({ bmiCategory }) {
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [fat, setFat] = useState("");
+  const [gender, setGender] = useState("");
 
   // Firebase references
   const loadCellState = ref(db, "Loadcell/state");
@@ -49,6 +53,7 @@ function Form({ bmiCategory }) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    gender: gender,
     age: 0,
   });
 
@@ -148,6 +153,7 @@ function Form({ bmiCategory }) {
       ...formData,
       createdAt: formattedDate,
       bmiCategory: bmiCategory,
+      bmi: bmi,
     };
 
     // Reference the "Users" node in your database
@@ -166,6 +172,7 @@ function Form({ bmiCategory }) {
         height: height,
         fat: fat,
         bmiCategory,
+        bmi: bmi,
 
         createdAt: formattedDate,
       });
@@ -186,7 +193,7 @@ function Form({ bmiCategory }) {
       setHeight(""); // Reset height
       setFat("");
 
-      handleNavigate();
+      home();
 
       console.log(
         "Loadcell, Ultrasonic and Fat Scanner data cleared after submission."

@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { TextField, Button, Grid, Paper } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Grid,
+  Paper,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 
 const LetterKeyboard = ({ onKeyPress, onBackspace, onClose }) => {
   const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
@@ -176,6 +184,23 @@ function PersonalInfo({ formData, setFormData }) {
         }
         fullWidth
       />
+      <br />
+      <br />
+
+      <InputLabel id="gender-select-label">Gender</InputLabel>
+      <Select
+        labelId="gender-select-label"
+        id="gender-select"
+        value={formData.gender}
+        label="Gender"
+        onChange={(event) =>
+          setFormData({ ...formData, gender: event.target.value })
+        }
+      >
+        <MenuItem value="male">Male</MenuItem>
+        <MenuItem value="female">Female</MenuItem>
+      </Select>
+
       <br />
       <br />
       <TextField
