@@ -8,7 +8,7 @@ import {
   onDisconnect,
 } from "firebase/database";
 
-const BodyScan = () => {
+const BodyScan = ({ fat, setFat }) => {
   const videoRef = useRef(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -63,8 +63,6 @@ const BodyScan = () => {
       }
     }, 5000); // Capture image after 5 seconds
   };
-
-  const [fat, setFat] = useState("");
 
   const db = getDatabase();
 

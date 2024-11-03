@@ -26,10 +26,12 @@ function Form2_0() {
   const db = getDatabase();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [fat, setFat] = useState("");
   const loadCellState = ref(db, "Loadcell/state");
   const loadCellData = ref(db, "Loadcell/data");
   const ultraSonicState = ref(db, "Ultrasonic/state");
   const ultraSonicData = ref(db, "Ultrasonic/data");
+  const fatData = ref(db, "Bodyfat/data");
   const [page, setPage] = useState(0);
   const [formData, setFormData] = useState({
     weight: 0,
@@ -46,13 +48,14 @@ function Form2_0() {
     } else if (page === 2) {
       return <Height height={height} setHeight={setHeight} />;
     } else if (page === 3) {
-      return <BodyScan />;
+      return <BodyScan fat={fat} setFat={setFat} />;
     }
   };
 
   const isNextDisabled = () => {
     if (page === 1 && (weight === "" || weight === 0)) return true; // Disable if weight is empty or zero
     if (page === 2 && (height === "" || height === 0)) return true; // Disable if height is empty or zero
+    if (page === 3 && (fat === "" || fat === 0)) return true; // Disable if fat is empty or zero
   };
 
   const tryAgainDisable = () => {
@@ -109,6 +112,7 @@ function Form2_0() {
     const updatedFormData = {
       weight: weight,
       height: height,
+      fat: fat,
       createdAt: formattedDate,
     };
 
@@ -123,11 +127,13 @@ function Form2_0() {
       // Clean up: Delete the loadCellData and ultraSonicData after saving
       await set(loadCellData, 0); // Deleting Loadcell data
       await set(ultraSonicData, 0); // Deleting Ultrasonic data
-
+      await set(fatData, 0);
       setFormData({
         weight: 0,
         height: 0,
+        fat: "",
       });
+      setFat("");
 
       handleNavigate();
     } catch (error) {

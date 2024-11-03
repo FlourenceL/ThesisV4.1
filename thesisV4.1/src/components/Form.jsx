@@ -3,6 +3,7 @@ import WeighingScale from "./WeighingScale";
 import BodyScan from "./BodyScan";
 import PersonalInfo from "./PersonalInfo";
 import Height from "./Height";
+import Overall from "./Overall";
 import { Button } from "@mui/material";
 import {
   getDatabase,
@@ -14,21 +15,35 @@ import {
 } from "firebase/database";
 import { useNavigate } from "react-router-dom";
 
-function Form() {
+function Form({ bmiCategory }) {
   const navigate = useNavigate();
   const handleNavigate = () => {
     navigate("/choose");
   };
 
+  const calculateBMI = (weight, height) => {
+    if (height > 0) {
+      return weight / (height / 100) ** 2; // Convert height to meters
+    }
+    return 0;
+  };
+  const determineBMICategory = (bmi) => {
+    if (bmi < 18.5) return "Underweight";
+    if (bmi < 24.9) return "Normal weight";
+    if (bmi < 29.9) return "Overweight";
+    return "Obesity";
+  };
   const db = getDatabase();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [fat, setFat] = useState("");
 
   // Firebase references
   const loadCellState = ref(db, "Loadcell/state");
   const loadCellData = ref(db, "Loadcell/data");
   const ultraSonicState = ref(db, "Ultrasonic/state");
   const ultraSonicData = ref(db, "Ultrasonic/data");
+  const fatData = ref(db, "Bodyfat/data");
 
   const [page, setPage] = useState(0);
   const [formData, setFormData] = useState({
@@ -37,7 +52,13 @@ function Form() {
     age: 0,
   });
 
-  const formTitles = ["Personal Info", "Body Weight", "Height", "Body Scan"];
+  const formTitles = [
+    "Personal Info",
+    "Body Weight",
+    "Height",
+    "Body Scan",
+    "Overall",
+  ];
 
   const pageDisplay = () => {
     if (page === 0) {
@@ -47,13 +68,24 @@ function Form() {
     } else if (page === 2) {
       return <Height height={height} setHeight={setHeight} />;
     } else if (page === 3) {
-      return <BodyScan />;
+      return <BodyScan fat={fat} setFat={setFat} />;
+    } else if (page === 4) {
+      return <Overall weight={weight} height={height} fat={fat} />;
     }
   };
 
   const isNextDisabled = () => {
-    if (page === 1 && (weight === "" || weight === 0)) return true; // Disable if weight is empty or zero
-    if (page === 2 && (height === "" || height === 0)) return true; // Disable if height is empty or zero
+    if (page === 0) {
+      // Check if firstName, lastName are empty and age is 0 or less
+      return !formData.firstName || !formData.lastName || formData.age <= 0;
+    }
+
+    // Existing checks for other pages
+    return (
+      (page === 1 && (!weight || weight <= 0)) ||
+      (page === 2 && (!height || height <= 0)) ||
+      (page === 3 && (!fat || fat <= 0))
+    );
   };
 
   const tryAgainDisable = () => {
@@ -108,10 +140,14 @@ function Form() {
       .toString()
       .padStart(2, "0")}-${today.getFullYear()}`;
 
+    const bmi = calculateBMI(weight, height);
+    const bmiCategory = determineBMICategory(bmi);
+
     // Update the formData with the current weight and height
     const updatedFormData = {
       ...formData,
       createdAt: formattedDate,
+      bmiCategory: bmiCategory,
     };
 
     // Reference the "Users" node in your database
@@ -128,6 +164,9 @@ function Form() {
       await set(newProgressRef, {
         weight: weight,
         height: height,
+        fat: fat,
+        bmiCategory,
+
         createdAt: formattedDate,
       });
       console.log("Progress data submitted successfully!");
@@ -135,6 +174,7 @@ function Form() {
       // Clean up: Delete the loadCellData and ultraSonicData after saving
       await set(loadCellData, 0); // Deleting Loadcell data
       await set(ultraSonicData, 0); // Deleting Ultrasonic data
+      await set(fatData, 0);
 
       // Reset formData
       setFormData({
@@ -144,10 +184,13 @@ function Form() {
       });
       setWeight(""); // Reset weight
       setHeight(""); // Reset height
+      setFat("");
 
       handleNavigate();
 
-      console.log("Loadcell and Ultrasonic data cleared after submission.");
+      console.log(
+        "Loadcell, Ultrasonic and Fat Scanner data cleared after submission."
+      );
     } catch (error) {
       console.error("Error submitting user data:", error);
     }
@@ -172,19 +215,21 @@ function Form() {
               Prev
             </Button>
             <section>
-              <Button
-                variant="contained"
-                disabled={tryAgainDisable()}
-                onClick={() => {
-                  if (page === 0) {
-                    handleNavigate();
-                  } else if (page !== 0) {
-                    handleShowAlert();
-                  }
-                }}
-              >
-                {page === 0 ? "Cancel" : "Try again"}
-              </Button>
+              {page !== formTitles.length - 1 && (
+                <Button
+                  variant="contained"
+                  disabled={tryAgainDisable()}
+                  onClick={() => {
+                    if (page === 0) {
+                      handleNavigate();
+                    } else if (page !== 0) {
+                      handleShowAlert();
+                    }
+                  }}
+                >
+                  {page === 0 ? "Cancel" : "Try again"}
+                </Button>
+              )}
               {showAlert && (
                 <div className="alert">
                   <div className="alert-content">
