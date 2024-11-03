@@ -53,9 +53,17 @@ function Form2_0() {
   };
 
   const isNextDisabled = () => {
-    if (page === 1 && (weight === "" || weight === 0)) return true; // Disable if weight is empty or zero
-    if (page === 2 && (height === "" || height === 0)) return true; // Disable if height is empty or zero
-    if (page === 3 && (fat === "" || fat === 0)) return true; // Disable if fat is empty or zero
+    if (page === 0) {
+      // Check if firstName, lastName are empty and age is 0 or less
+      return !selectedUserId;
+    }
+
+    // Existing checks for other pages
+    return (
+      (page === 1 && (!weight || weight <= 0)) ||
+      (page === 2 && (!height || height <= 0)) ||
+      (page === 3 && (!fat || fat <= 0))
+    );
   };
 
   const tryAgainDisable = () => {
