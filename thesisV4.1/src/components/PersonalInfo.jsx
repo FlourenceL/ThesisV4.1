@@ -8,6 +8,12 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { update } from "firebase/database"; // Import Firebase update function
+import { ref } from "firebase/database"; // Import ref function from Firebase
+import dayjs from "dayjs";
 
 const LetterKeyboard = ({ onKeyPress, onBackspace, onClose }) => {
   const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
@@ -34,7 +40,7 @@ const LetterKeyboard = ({ onKeyPress, onBackspace, onClose }) => {
           <Grid item>
             <Button
               variant="contained"
-              onClick={() => onKeyPress(" ")} // Add space button functionality
+              onClick={() => onKeyPress(" ")}
               style={{
                 width: "100px",
                 height: "40px",
@@ -118,10 +124,25 @@ const NumberKeyboard = ({ onKeyPress, onBackspace, onClose }) => {
   );
 };
 
-function PersonalInfo({ formData, setFormData }) {
+function PersonalInfo({ formData, setFormData, userId, dbRef }) {
   const [isLetterKeyboardVisible, setIsLetterKeyboardVisible] = useState(false);
   const [isNumberKeyboardVisible, setIsNumberKeyboardVisible] = useState(false);
   const [activeField, setActiveField] = useState("");
+
+  const calculateAge = (birthdate) => {
+    if (!birthdate || !birthdate.isValid()) return "";
+    const today = dayjs();
+    return today.diff(birthdate, "year");
+  };
+
+  const updateAgeInDatabase = (newAge) => {
+    // Write the new age to Firebase under the user’s record
+    update(ref(dbRef, `Users/${userId}`), {
+      age: newAge, // Update age in Firebase
+    }).catch((error) => {
+      console.error("Error updating age in database:", error);
+    });
+  };
 
   const handleFocus = (field) => {
     setActiveField(field);
@@ -144,7 +165,7 @@ function PersonalInfo({ formData, setFormData }) {
   const handleBackspace = () => {
     setFormData((prevData) => ({
       ...prevData,
-      [activeField]: prevData[activeField].toString().slice(0, -1), // Ensure age is treated as a string
+      [activeField]: prevData[activeField].toString().slice(0, -1),
     }));
   };
 
@@ -155,83 +176,109 @@ function PersonalInfo({ formData, setFormData }) {
   };
 
   return (
-    <>
-      <TextField
-        id="outlined-first-name"
-        label="First Name"
-        variant="outlined"
-        type="text"
-        placeholder="First name..."
-        value={formData.firstName}
-        onFocus={() => handleFocus("firstName")}
-        onChange={(event) =>
-          setFormData({ ...formData, firstName: event.target.value })
-        }
-        fullWidth
-      />
-      <br />
-      <br />
-      <TextField
-        id="outlined-last-name"
-        label="Last Name"
-        variant="outlined"
-        type="text"
-        placeholder="Last name..."
-        value={formData.lastName}
-        onFocus={() => handleFocus("lastName")}
-        onChange={(event) =>
-          setFormData({ ...formData, lastName: event.target.value })
-        }
-        fullWidth
-      />
-      <br />
-      <br />
-
-      <InputLabel id="gender-select-label">Gender</InputLabel>
-      <Select
-        labelId="gender-select-label"
-        id="gender-select"
-        value={formData.gender}
-        label="Gender"
-        onChange={(event) =>
-          setFormData({ ...formData, gender: event.target.value })
-        }
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <div
+        style={{
+          maxWidth: "400px",
+          margin: "auto",
+          padding: "20px",
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "10px",
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+          backdropFilter: "blur(10px)",
+        }}
       >
-        <MenuItem value="male">Male</MenuItem>
-        <MenuItem value="female">Female</MenuItem>
-      </Select>
+        <TextField
+          id="outlined-first-name"
+          label="First Name"
+          variant="outlined"
+          type="text"
+          placeholder="First name..."
+          value={formData.firstName}
+          onFocus={() => handleFocus("firstName")}
+          onChange={(event) =>
+            setFormData({ ...formData, firstName: event.target.value })
+          }
+          fullWidth
+          sx={{ marginBottom: 2 }}
+        />
+        {activeField === "firstName" && isLetterKeyboardVisible && (
+          <LetterKeyboard
+            onKeyPress={handleKeyPress}
+            onBackspace={handleBackspace}
+            onClose={handleCloseKeyboard}
+          />
+        )}
+        <TextField
+          id="outlined-last-name"
+          label="Last Name"
+          variant="outlined"
+          type="text"
+          placeholder="Last name..."
+          value={formData.lastName}
+          onFocus={() => handleFocus("lastName")}
+          onChange={(event) =>
+            setFormData({ ...formData, lastName: event.target.value })
+          }
+          fullWidth
+          sx={{ marginBottom: 2 }}
+        />
+        {activeField === "lastName" && isLetterKeyboardVisible && (
+          <LetterKeyboard
+            onKeyPress={handleKeyPress}
+            onBackspace={handleBackspace}
+            onClose={handleCloseKeyboard}
+          />
+        )}
+        <InputLabel id="demo-simple-select-label">Sex</InputLabel>
+        <Select
+          labelId="gender-select-label"
+          id="gender-select"
+          value={formData.gender}
+          label="Sex"
+          onChange={(event) =>
+            setFormData({ ...formData, gender: event.target.value })
+          }
+          fullWidth
+          sx={{ marginBottom: 2 }}
+        >
+          <MenuItem value="male">Male</MenuItem>
+          <MenuItem value="female">Female</MenuItem>
+        </Select>
 
-      <br />
-      <br />
-      <TextField
-        id="outlined-age"
-        label="Age"
-        type="text" // Change type to text to allow keyboard input
-        placeholder="Age..."
-        value={formData.age}
-        onFocus={() => handleFocus("age")}
-        onChange={
-          (event) => setFormData({ ...formData, age: event.target.value }) // Store age as a string
-        }
-        fullWidth
-      />
-      <br />
-      <br />
-      {isLetterKeyboardVisible && (
-        <LetterKeyboard
-          onKeyPress={handleKeyPress}
-          onBackspace={handleBackspace}
-          onClose={handleCloseKeyboard}
+        <DatePicker
+          sx={{ marginBottom: 2 }}
+          label="Birthdate"
+          value={formData.birthdate ? dayjs(formData.birthdate) : null} // Ensure a valid dayjs object or null
+          onChange={(newValue) => {
+            if (newValue && newValue.isValid()) {
+              const newAge = calculateAge(newValue);
+              setFormData({
+                ...formData,
+                birthdate: newValue, // Save as a dayjs object
+                age: newAge, // Calculate and update age
+              });
+              updateAgeInDatabase(newAge); // Update age in database
+            }
+          }}
+          renderInput={(params) => (
+            <TextField {...params} fullWidth sx={{ marginBottom: 2 }} />
+          )}
         />
-      )}
-      {isNumberKeyboardVisible && (
-        <NumberKeyboard
-          onKeyPress={handleKeyPress}
-          onBackspace={handleBackspace}
-          onClose={handleCloseKeyboard}
+        <TextField
+          id="outlined-age"
+          label="Age"
+          type="text"
+          placeholder="Age..."
+          value={formData.age}
+          InputProps={{
+            readOnly: true,
+          }}
+          fullWidth
+          sx={{ marginBottom: 2 }}
         />
-      )}
-    </>
+      </div>
+    </LocalizationProvider>
   );
 }
 

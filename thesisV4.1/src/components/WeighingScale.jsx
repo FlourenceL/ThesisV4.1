@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   getDatabase,
   ref,
@@ -6,29 +6,27 @@ import {
   set,
   onDisconnect,
 } from "firebase/database";
+import { TextField } from "@mui/material";
 
 function WeighingScale({ weight, setWeight }) {
   const db = getDatabase();
+
   useEffect(() => {
     if (!db) return;
 
     const weighingScaleDataRef = ref(db, "Loadcell/data");
     const stateRef = ref(db, "Loadcell/state");
 
-    // Set the state to true when the component is mounted
     set(stateRef, true);
 
-    // Automatically set the state to false and the data to 0 if the connection is lost (e.g., page refresh)
     onDisconnect(stateRef).set(false);
     onDisconnect(weighingScaleDataRef).set(0);
 
-    // Listen for real-time updates on the "Loadcell/data"
     const unsubscribe = onValue(weighingScaleDataRef, (snapshot) => {
       const weightValue = snapshot.val();
       setWeight(weightValue);
     });
 
-    // Cleanup function to set the state to false when the component is unmounted
     return () => {
       set(stateRef, false);
       unsubscribe();
@@ -36,12 +34,32 @@ function WeighingScale({ weight, setWeight }) {
   }, [db, setWeight]);
 
   return (
-    <form>
-      <center>
-        <label>Body weight: </label>
-        <input type="text" name="weight" id="weight" readOnly value={weight} />
-      </center>
-    </form>
+    <div style={{ textAlign: "center" }}>
+      <TextField
+        id="weight"
+        label="Body Weight (KG)"
+        value={parseFloat(weight).toFixed(2)}
+        InputProps={{
+          readOnly: true,
+        }}
+        style={{ marginBottom: "20px" }}
+      />
+
+      {/* Custom Gauge */}
+
+      <div className="gauge">
+        <div className="gauge-arc" />
+        <div
+          className="gauge-needle"
+          style={{
+            transform: `rotate(${
+              Math.min(Math.max(weight, 0), 100) * 1.8 - 90
+            }deg)`,
+          }}
+        />
+        <div className="gauge-center" />
+      </div>
+    </div>
   );
 }
 

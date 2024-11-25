@@ -4,7 +4,21 @@ import BodyScan from "./BodyScan";
 import PersonalInfo from "./PersonalInfo";
 import Height from "./Height";
 import Overall from "./Overall";
-import { Button } from "@mui/material";
+import WarningIcon from "@mui/icons-material/Warning";
+import {
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  Box,
+} from "@mui/material";
+
+import firebaseConfig from "./firebaseConfig";
 import {
   getDatabase,
   ref,
@@ -24,18 +38,21 @@ function Form({ bmiCategory }) {
   const home = () => {
     navigate("/");
   };
+
   const calculateBMI = (weight, height) => {
     if (height > 0) {
       return parseFloat((weight / (height / 100) ** 2).toFixed(2)); // Convert height to meters and limit to 2 decimal places
     }
     return 0;
   };
+
   const determineBMICategory = (bmi) => {
     if (bmi < 18.5) return "Underweight";
     if (bmi < 24.9) return "Normal weight";
     if (bmi < 29.9) return "Overweight";
     return "Obesity";
   };
+
   const db = getDatabase();
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
@@ -49,12 +66,13 @@ function Form({ bmiCategory }) {
   const ultraSonicData = ref(db, "Ultrasonic/data");
   const fatData = ref(db, "Bodyfat/data");
 
-  const [page, setPage] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
+    birthdate: null,
     firstName: "",
     lastName: "",
     gender: gender,
-    age: 0,
+    age: "",
   });
 
   const formTitles = [
@@ -66,70 +84,75 @@ function Form({ bmiCategory }) {
   ];
 
   const pageDisplay = () => {
-    if (page === 0) {
+    if (activeStep === 0) {
       return <PersonalInfo formData={formData} setFormData={setFormData} />;
-    } else if (page === 1) {
+    } else if (activeStep === 1) {
       return <WeighingScale weight={weight} setWeight={setWeight} />;
-    } else if (page === 2) {
+    } else if (activeStep === 2) {
       return <Height height={height} setHeight={setHeight} />;
-    } else if (page === 3) {
+    } else if (activeStep === 3) {
       return <BodyScan fat={fat} setFat={setFat} />;
-    } else if (page === 4) {
+    } else if (activeStep === 4) {
       return <Overall weight={weight} height={height} fat={fat} />;
     }
   };
 
   const isNextDisabled = () => {
-    if (page === 0) {
-      // Check if firstName, lastName are empty and age is 0 or less
+    if (activeStep === 0) {
       return !formData.firstName || !formData.lastName || formData.age <= 0;
     }
 
-    // Existing checks for other pages
-    return (
-      (page === 1 && (!weight || weight <= 0)) ||
-      (page === 2 && (!height || height <= 0)) ||
-      (page === 3 && (!fat || fat <= 0))
-    );
+    return activeStep === 1 && (!weight || weight <= 0);
   };
 
   const tryAgainDisable = () => {
-    if (page === 1 && (weight === "" || weight === 0)) return true; // Disable if weight is empty or zero
-    if (page === 2 && (height === "" || height === 0)) return true;
+    if (activeStep === 1 && (weight === "" || weight === 0)) return true; // Disable if weight is empty or zero
+    if (activeStep === 2 && (height === "" || height === 0)) return true;
   };
 
   //-----------------------------------ALERT BUTTON-----------------------------------
   const [showAlert, setShowAlert] = useState(false);
+  const [showDialog1, setShowDialog1] = useState(false);
+  const [showDialog2, setShowDialog2] = useState(false);
+  const [showDialog3, setShowDialog3] = useState(false);
+  const [showTryAgainDialog, setShowTryAgainDialog] = useState(false);
   const handleShowAlert = () => {
-    setShowAlert(true);
-
+    setShowTryAgainDialog(true);
     // Set the state to true when the component is mounted
-    if (page === 1) {
+    if (activeStep === 1) {
       set(loadCellState, false);
-    } else if (page === 2) {
+    } else if (activeStep === 2) {
       set(ultraSonicState, false);
     }
   };
+  const handleShowDialog1 = () => {
+    setShowDialog1(true); // Show dialog instead of alert
+  };
 
-  const handleYes = () => {
-    alert("You clicked Yes!");
-    setShowAlert(false);
-    // Set the state to true when the component is mounted
-    if (page === 1) {
+  const handleShowDialog2 = () => {
+    setShowDialog2(true); // Show dialog instead of alert
+  };
+
+  const handleShowDialog3 = () => {
+    setShowDialog3(true); // Show dialog instead of alert
+  };
+
+  const handleYesTryAgain = () => {
+    setShowTryAgainDialog(false);
+    if (activeStep === 1) {
       set(loadCellState, true);
       set(loadCellData, 0);
-    } else if (page === 2) {
+    } else if (activeStep === 2) {
       set(ultraSonicState, true);
       set(ultraSonicData, 0);
     }
   };
 
-  const handleNo = () => {
-    alert("You clicked No!");
-    setShowAlert(false);
-    if (page === 1) {
+  const handleNoTryAgain = () => {
+    setShowTryAgainDialog(false);
+    if (activeStep === 1) {
       set(loadCellState, false);
-    } else if (page === 2) {
+    } else if (activeStep === 2) {
       set(ultraSonicState, false);
     }
   };
@@ -151,6 +174,7 @@ function Form({ bmiCategory }) {
     // Update the formData with the current weight and height
     const updatedFormData = {
       ...formData,
+      birthdate: formData.birthdate?.format("YYYY-MM-DD") || "",
       createdAt: formattedDate,
       bmiCategory: bmiCategory,
       bmi: bmi,
@@ -173,7 +197,6 @@ function Form({ bmiCategory }) {
         fat: fat,
         bmiCategory,
         bmi: bmi,
-
         createdAt: formattedDate,
       });
       console.log("Progress data submitted successfully!");
@@ -202,70 +225,198 @@ function Form({ bmiCategory }) {
       console.error("Error submitting user data:", error);
     }
   };
+  const buttonText = activeStep === 0 ? "Cancel" : "Try Again";
 
   return (
     <div className="form">
       <div className="progress-bar">
         <div className="form-container">
           <div className="header">
-            <h1>{formTitles[page]}</h1>
+            <h1>{formTitles[activeStep]}</h1>
           </div>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {formTitles.map((title, index) => (
+              <Step key={index}>
+                <StepLabel>{title}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
           <div className="body">{pageDisplay()}</div>
           <div className="footer">
-            <Button
-              variant="contained"
-              disabled={page === 0}
-              onClick={() => {
-                setPage((currPage) => currPage - 1);
-              }}
-            >
-              Prev
-            </Button>
             <section>
-              {page !== formTitles.length - 1 && (
+              {activeStep !== formTitles.length - 1 && activeStep !== 3 && (
                 <Button
+                  sx={{
+                    position: "fixed", // Make the buttons fixed to the bottom
+                    bottom: 16, // Distance from the bottom edge
+                    left: "7%", // Position the Cancel button on the left
+                    transform: "translateX(0%)",
+                    zIndex: 10,
+                    "@media (max-width: 600px)": {
+                      left: "5%", // Adjust position for mobile screens
+                    },
+                  }}
                   variant="contained"
                   disabled={tryAgainDisable()}
                   onClick={() => {
-                    if (page === 0) {
+                    if (activeStep === 0) {
                       handleNavigate();
-                    } else if (page !== 0) {
+                    } else if (activeStep === 1 || activeStep === 2) {
                       handleShowAlert();
                     }
                   }}
                 >
-                  {page === 0 ? "Cancel" : "Try again"}
+                  {buttonText}
                 </Button>
               )}
-              {showAlert && (
-                <div className="alert">
-                  <div className="alert-content">
-                    <span className="alert-message">
-                      Would you like to try again?
-                    </span>
-                    <Button variant="contained" onClick={handleYes}>
-                      Yes
-                    </Button>
-                    <Button variant="contained" onClick={handleNo}>
-                      No
-                    </Button>
-                  </div>
-                </div>
-              )}
+
+              <Dialog
+                open={showTryAgainDialog}
+                onClose={() => setShowTryAgainDialog(false)}
+              >
+                <DialogTitle>
+                  <Box display="flex" alignItems="center">
+                    Warning!
+                    <WarningIcon style={{ marginLeft: 8, color: "orange" }} />
+                  </Box>
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Would you like to try again?
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button variant="contained" onClick={handleYesTryAgain}>
+                    Yes
+                  </Button>
+                  <Button variant="outlined" onClick={handleNoTryAgain}>
+                    No
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </section>
+
             <Button
+              sx={{
+                position: "fixed", // Make the buttons fixed to the bottom
+                bottom: 16, // Distance from the bottom edge
+                right: "10%", // Position the Next button on the right
+                transform: "translateX(0%)",
+                zIndex: 10,
+                "@media (max-width: 600px)": {
+                  right: "5%", // Adjust position for mobile screens
+                },
+              }}
               variant="contained"
               disabled={isNextDisabled()}
               onClick={() => {
-                if (page === formTitles.length - 1) {
+                if (activeStep === 0) {
+                  handleShowDialog1(); // Show dialog instead of moving to next step
+                } else if (activeStep === 1) {
+                  handleShowDialog2();
+                } else if (activeStep === 2) {
+                  handleShowDialog3();
+                } else if (activeStep === formTitles.length - 1) {
                   handleSubmit();
                 } else {
-                  setPage((currPage) => currPage + 1);
+                  setActiveStep((prevStep) => prevStep + 1);
                 }
               }}
             >
-              {page === formTitles.length - 1 ? "Submit" : "Next"}
+              {activeStep === formTitles.length - 1 ? "Submit" : "Next"}
             </Button>
+
+            <Dialog open={showDialog1} onClose={() => setShowDialog1(false)}>
+              <DialogTitle>
+                <Box display="flex" alignItems="center">
+                  Warning!
+                  <WarningIcon
+                    style={{ marginLeft: 8, color: "orange" }}
+                  />{" "}
+                  {/* Icon with left margin */}
+                </Box>
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  {" "}
+                  {/* Warning icon with some style */}
+                  Step off the scale, press Next, then step back on.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => {
+                    setShowDialog1(false);
+                    setActiveStep((prevStep) => prevStep + 1); // Proceed to the next step
+                  }}
+                  color="primary"
+                >
+                  Next
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Dialog open={showDialog2} onClose={() => setShowDialog2(false)}>
+              <DialogTitle>
+                <Box display="flex" alignItems="center">
+                  Warning!
+                  <WarningIcon
+                    style={{ marginLeft: 8, color: "orange" }}
+                  />{" "}
+                  {/* Icon with left margin */}
+                </Box>
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  {" "}
+                  {/* Warning icon with some style */}
+                  Please step onto the platform, stand straight, and align
+                  yourself with the sensor.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => {
+                    setShowDialog2(false);
+                    setActiveStep((prevStep) => prevStep + 1); // Proceed to the next step
+                  }}
+                  color="primary"
+                >
+                  Next
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Dialog open={showDialog3} onClose={() => setShowDialog3(false)}>
+              <DialogTitle>
+                <Box display="flex" alignItems="center">
+                  Warning!
+                  <WarningIcon
+                    style={{ marginLeft: 8, color: "orange" }}
+                  />{" "}
+                  {/* Icon with left margin */}
+                </Box>
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  {" "}
+                  {/* Warning icon with some style */}
+                  Ensure your midsection is visible to the camera for an
+                  accurate body fat scan.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => {
+                    setShowDialog3(false);
+                    setActiveStep((prevStep) => prevStep + 1); // Proceed to the next step
+                  }}
+                  color="primary"
+                >
+                  Next
+                </Button>
+              </DialogActions>
+            </Dialog>
           </div>
         </div>
       </div>

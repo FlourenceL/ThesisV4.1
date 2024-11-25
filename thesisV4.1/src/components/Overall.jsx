@@ -1,4 +1,4 @@
-import { Typography, TextField } from "@mui/material";
+import { Typography, TextField, Grid, Box } from "@mui/material";
 import { getDatabase } from "firebase/database";
 
 function Overall({ weight, height, fat }) {
@@ -24,54 +24,77 @@ function Overall({ weight, height, fat }) {
   const bmiCategory = determineBMICategory(bmi); // Get the category
 
   return (
-    <>
-      <Typography variant="h1">Body Weight:</Typography>
-      <TextField
-        id="outlined-read-only-input-weight"
-        label="Weight"
-        value={weight}
-        InputProps={{
-          readOnly: true,
-        }}
-      />
-      <Typography variant="h1">Height:</Typography>
-      <TextField
-        id="outlined-read-only-input-height"
-        label="Height"
-        value={height}
-        InputProps={{
-          readOnly: true,
-        }}
-      />
-      <Typography variant="h1">Body Fat:</Typography>
-      <TextField
-        id="outlined-read-only-input-fat"
-        label="Body Fat"
-        value={fat}
-        InputProps={{
-          readOnly: true,
-        }}
-      />
+    <Box sx={{ padding: 3 }}>
+      <Grid container spacing={3}>
+        {/* Weight Section */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h5" gutterBottom>
+            Body Weight:
+          </Typography>
+          <TextField
+            fullWidth
+            id="outlined-read-only-input-weight"
+            label="Weight (kg)"
+            value={weight}
+            InputProps={{
+              readOnly: true,
+            }}
+            variant="outlined"
+          />
+        </Grid>
 
-      {/* <Typography variant="h1">Body Mass Index (BMI):</Typography>
-      <TextField
-        id="outlined-read-only-input-bmi"
-        label="BMI"
-        value={bmi.toFixed(2)} // Display BMI value
-        InputProps={{
-          readOnly: true,
-        }}
-      /> */}
-      <Typography variant="h1">BMI Category:</Typography>
-      <TextField
-        id="outlined-read-only-input-bmi-category"
-        label="Category"
-        value={bmiCategory} // Display BMI category
-        InputProps={{
-          readOnly: true,
-        }}
-      />
-    </>
+        {/* Height Section */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h5" gutterBottom>
+            Height:
+          </Typography>
+          <TextField
+            fullWidth
+            id="outlined-read-only-input-height"
+            label="Height (cm)"
+            value={height}
+            InputProps={{
+              readOnly: true,
+            }}
+            variant="outlined"
+          />
+        </Grid>
+
+        {/* Body Fat Section */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h5" gutterBottom>
+            Body Fat:
+          </Typography>
+          <TextField
+            fullWidth
+            id="outlined-read-only-input-fat"
+            label="Body Fat (%)"
+            value={fat}
+            InputProps={{
+              readOnly: true,
+            }}
+            variant="outlined"
+          />
+        </Grid>
+
+        {/* BMI Category Section */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h5" gutterBottom>
+            BMI Category:
+          </Typography>
+          <TextField
+            fullWidth
+            id="outlined-read-only-input-bmi-category"
+            label="Category"
+            value={bmiCategory}
+            InputProps={{
+              readOnly: true,
+            }}
+            variant="outlined"
+          />
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
 

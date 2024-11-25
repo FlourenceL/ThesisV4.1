@@ -1,31 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Button, TextField } from "@mui/material";
-import {
-  getDatabase,
-  ref,
-  onValue,
-  set,
-  onDisconnect,
-} from "firebase/database";
+import { Button, TextField, Box, Typography } from "@mui/material";
+import { getDatabase, ref, onValue, onDisconnect } from "firebase/database";
 
 const BodyScan = ({ fat, setFat }) => {
   const videoRef = useRef(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
-  const [countdown, setCountdown] = useState(null); // State for countdown
+  const [countdown, setCountdown] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // State for loading screen
 
   useEffect(() => {
-    // Load the video feed URL if the camera is on
     if (isCameraOn && videoRef.current) {
-      videoRef.current.src = "http://localhost:5000/video_feed"; // Adjust for server address if needed
+      videoRef.current.src = "http://localhost:5000/video_feed";
     } else if (videoRef.current) {
-      videoRef.current.src = ""; // Clear the src to stop the feed
+      videoRef.current.src = "";
     }
   }, [isCameraOn]);
 
   const startCamera = async () => {
     try {
-      await fetch("http://localhost:5000/start_camera"); // Adjust for server address if needed
+      await fetch("http://localhost:5000/start_camera");
       setIsCameraOn(true);
     } catch (error) {
       console.error("Error starting camera:", error);
@@ -34,34 +28,39 @@ const BodyScan = ({ fat, setFat }) => {
 
   const stopCamera = () => {
     setIsCameraOn(false);
-    setCapturedImage(null); // Clear captured image when camera is turned off
-    setCountdown(null); // Clear countdown when camera is turned off
+    setCapturedImage(null);
+    setCountdown(null);
   };
 
   const captureImage = async () => {
-    setCountdown(5); // Start countdown
+    setCountdown(5);
 
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
-          clearInterval(countdownInterval); // Clear interval
-          return null; // Reset countdown state
+          clearInterval(countdownInterval);
+          return null;
         }
-        return prev - 1; // Decrease countdown
+        return prev - 1;
       });
-    }, 1000); // Update countdown every second
+    }, 1000);
 
-    // Wait for the countdown to finish before capturing the image
     setTimeout(async () => {
       try {
-        const response = await fetch("http://localhost:5000/capture_image"); // Adjust for server address if needed
+        const response = await fetch("http://localhost:5000/capture_image");
         const blob = await response.blob();
         const imageObjectURL = URL.createObjectURL(blob);
         setCapturedImage(imageObjectURL);
+        setIsLoading(true); // Show loading screen after capture
+
+        // Hide loading screen after 3 seconds
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 3000);
       } catch (error) {
         console.error("Error capturing image:", error);
       }
-    }, 5000); // Capture image after 5 seconds
+    }, 5000);
   };
 
   const db = getDatabase();
@@ -71,61 +70,120 @@ const BodyScan = ({ fat, setFat }) => {
 
     onDisconnect(Bodyfatref).set("");
 
-    // Listen for real-time updates on the "Ultrasonic/data"
     const unsubscribe = onValue(Bodyfatref, (snapshot) => {
       const fatValue = snapshot.val();
       setFat(fatValue);
     });
 
-    // Cleanup function to set the state to false when the component is unmounted
     return () => {
       unsubscribe();
     };
   }, [db, setFat]);
 
   return (
-    <div>
-      <h1>Camera Feed</h1>
+    <Box display="flex" flexDirection="column" alignItems="center" mt={3}>
       <TextField
         id="outlined-read-only-input"
         label="Body Fat"
         value={fat}
-        onChange={(e) => setInputValue(e.target.value)}
         InputProps={{
           readOnly: true,
         }}
+        sx={{ mb: 3, width: "50%" }}
       />
-      {isCameraOn ? (
-        <img
-          ref={videoRef}
-          alt="Camera Feed"
-          style={{ width: "100%", maxWidth: "640px" }}
-        />
-      ) : (
-        <p>Camera is off</p>
+
+      <Box
+        position="relative"
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        sx={{ width: "100%", maxWidth: "640px", mb: 3 }}
+      >
+        {isCameraOn ? (
+          <>
+            <img ref={videoRef} alt="Camera Feed" style={{ width: "100%" }} />
+            {countdown !== null && (
+              <Typography
+                variant="h3"
+                color="white"
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                }}
+              >
+                {countdown}
+              </Typography>
+            )}
+          </>
+        ) : (
+          <Typography variant="body1" color="textSecondary">
+            Camera is off
+          </Typography>
+        )}
+      </Box>
+
+      <Box display="flex" justifyContent="center" gap={2} sx={{ mb: 3 }}>
+        <Button variant="contained" onClick={startCamera} disabled={isCameraOn}>
+          Turn On Camera
+        </Button>
+        <Button variant="contained" onClick={stopCamera} disabled={!isCameraOn}>
+          Turn Off Camera
+        </Button>
+        <Button
+          variant="contained"
+          onClick={captureImage}
+          disabled={!isCameraOn}
+        >
+          Capture Image
+        </Button>
+      </Box>
+
+      {isLoading && (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          position="fixed"
+          top={0}
+          left={0}
+          width="100vw"
+          height="100vh"
+          bgcolor="rgba(0, 0, 0, 0.7)"
+          zIndex={1000}
+        >
+          <dotlottie-player
+            src="https://lottie.host/65a2f604-fa0d-4041-b03f-e6bf33cf9e75/z78lsLXky6.json"
+            background="transparent"
+            speed="0.75"
+            style={{ width: "100%", maxWidth: "450px", height: "auto" }}
+            loop
+            autoplay
+          />
+          <Typography variant="h6" color="white" mt={2}>
+            Processing your image...
+          </Typography>
+        </Box>
       )}
-      <Button variant="contained" onClick={startCamera} disabled={isCameraOn}>
-        Turn On Camera
-      </Button>
-      <Button variant="contained" onClick={stopCamera} disabled={!isCameraOn}>
-        Turn Off Camera
-      </Button>
-      <Button variant="contained" onClick={captureImage} disabled={!isCameraOn}>
-        Capture Image
-      </Button>
-      {countdown !== null && <h2>Capturing in {countdown}...</h2>}{" "}
-      {/* Display countdown */}
-      {capturedImage && (
-        <div>
-          <h2>Captured Image</h2>
+
+      {capturedImage && !isLoading && (
+        <Box display="flex" flexDirection="column" alignItems="center" mt={3}>
+          <Typography variant="h6" mb={1}>
+            Captured Image
+          </Typography>
           <img
             src={capturedImage}
             alt="Captured"
-            style={{ width: "100%", maxWidth: "640px" }}
+            style={{ width: "100%", maxWidth: "640px", borderRadius: "8px" }}
           />
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
